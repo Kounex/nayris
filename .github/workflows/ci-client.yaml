@@ -26,10 +26,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         env:
-          repository_name: ${{ github.repository_name }}
+          repository: ${{ github.repository }}
         with:
           images: |
-            ghcr.io/kounex/$repository_name/nginx-client
+            ghcr.io/${{ repository_name}}/nginx-client
           labels: |
             org.opencontainers.image.title=nginx-client
             org.opencontainers.image.description=Image based on nginx serving the web client

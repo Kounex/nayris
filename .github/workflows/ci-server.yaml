@@ -26,10 +26,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         env:
-          repository_name: ${{ github.repository_name }}
+          repository: ${{ github.repository }}
         with:
           images: |
-            ghcr.io/kounex/$repository_name/nestjs-server
+            ghcr.io/${{ repository_name}}/nestjs-server
           labels: |
             org.opencontainers.image.title=nestjs-server
             org.opencontainers.image.description=Image based on node serving the nestjs server
