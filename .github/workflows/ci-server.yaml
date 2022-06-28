@@ -25,11 +25,9 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v3
-        env:
-          repository: ${{ github.repository }}
         with:
           images: |
-            ghcr.io/$repository/nestjs-server
+            ghcr.io/${{ github.repository }}/nestjs-server
           labels: |
             org.opencontainers.image.title=nestjs-server
             org.opencontainers.image.description=Image based on node serving the nestjs server

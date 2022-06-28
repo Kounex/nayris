@@ -25,11 +25,9 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v3
-        env:
-          repository: ${{ github.repository }}
         with:
           images: |
-            ghcr.io/$repository/nginx-client
+            ghcr.io/${{ github.repository }}/nginx-client
           labels: |
             org.opencontainers.image.title=nginx-client
             org.opencontainers.image.description=Image based on nginx serving the web client
