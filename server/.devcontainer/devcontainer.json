@@ -1,0 +1,26 @@
+{
+    "name": "nayris-backend",
+    "build": {
+        "dockerfile": "Dockerfile",
+        // "args": {
+        //     "EXPRESS_PORT": "4444",
+        // }
+    },
+    // Set *default* container specific settings.json values on container create.
+    "settings": {
+        "editor.formatOnSave": true,
+    },
+    // Add the IDs of extensions you want installed when the container is created.
+    "extensions": [
+        "ms-vscode.vscode-typescript-tslint-plugin",
+    ],
+    "forwardPorts": [
+        4444
+    ],
+    // "portsAttributes": {
+    //     ".+\\/src/server.ts": {
+    //         "onAutoForward": "notify"
+    //     }
+    // },
+    "postCreateCommand": "npm i && npm run start:dev",
+}

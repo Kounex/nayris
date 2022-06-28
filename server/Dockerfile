@@ -1,0 +1,51 @@
+# ------ BUILDER ------
+FROM node:17 as builder
+
+# Set workdir where the application to build will reside
+WORKDIR /nayris
+
+# Copy all files over to the workdir of the build process
+ADD ./ ./
+
+# Install dependencies and build the application
+RUN npm install && npm run build
+
+
+# ------ RUNNER ------
+FROM node:17
+
+ENV PORT=4444
+
+WORKDIR /nayris
+
+COPY --from=builder /nayris/dist ./dist
+COPY --from=builder /nayris/node_modules ./node_modules
+COPY --from=builder /nayris/package.json ./package.json
+
+# Have a root user which has superuser privileges
+USER root
+
+# Update base environment
+RUN apt-get update
+
+# Symlink python3 dir to "normal" python dir
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Install ffmpeg
+RUN apt-get -y install ffmpeg
+
+# Download youtube-dl binary and make it executable
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp
+
+# Change group and access rights so these folders / executables can
+# be used as non root for security reasons
+RUN chgrp 0 /usr/local/bin/yt-dlp && \
+    chmod g=u /usr/local/bin/yt-dlp 
+
+RUN chgrp -R 0 ./ && \
+    chmod -R g=u ./ 
+
+# Change user to non root
+USER 1000
+
+ENTRYPOINT ["npm", "run", "start:prod"]

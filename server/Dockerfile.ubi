@@ -1,0 +1,30 @@
+FROM registry.access.redhat.com/ubi8/nodejs-16:latest
+
+# Have a root user which has superuser privileges
+USER root
+
+# Update base environment
+RUN yum -y update
+
+# Make sure we have the latest base
+RUN yum -y upgrade
+
+# Install and enable EPEL (Extra Packages for Enterprise Linux)
+RUN yum -y install --nogpgcheck https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+# Install and enable RPM Fusion
+RUN yum -y install --nogpgcheck https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm
+
+# RUN subscription-manager repos --enable "codeready-builder-for-rhel-8-$(uname -m)-rpms"
+
+# Install python3
+RUN yum -y install -y python3
+
+# Symlink python3 dir to "normal" python dir
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Install ffmpeg now that we have EPEL and RPM Fusion
+# RUN yum -y install ffmpeg
+
+# Download youtube-dl binary and make it executable
+RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl && chmod a+rx /usr/local/bin/youtube-dl
