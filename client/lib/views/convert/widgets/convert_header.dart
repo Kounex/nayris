@@ -11,8 +11,17 @@ class ConvertHeader extends StatelessWidget {
     return BannerWrapper(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 64.0),
-        child: Image.asset(
-          'assets/images/logo.png',
+        child: Column(
+          children: [
+            Text(
+              'NAYRIS',
+              style: Theme.of(context).textTheme.headline6,
+            ),
+            Text(
+              'Not another YouTube ripper I swear',
+              style: Theme.of(context).textTheme.caption,
+            ),
+          ],
         ).constrained,
       ),
     );
