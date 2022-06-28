@@ -27,7 +27,7 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: |
-            ghcr.io/kounex/nginx-client
+            ghcr.io/kounex/nayris/nginx-client
           labels: |
             org.opencontainers.image.title=nginx-client
             org.opencontainers.image.description=Image based on nginx serving the web client
