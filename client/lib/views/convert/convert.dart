@@ -101,7 +101,7 @@ class ConvertView extends ConsumerWidget {
         const ConvertHeader(),
         const SizedBox(height: 32.0),
         SelectableText(
-          'Yet another Youtube ripper. Enter a Youtube link (in whatever format, most importantly the "watch..." part at the end has to be present) and you will receive the video information which you can adjust to your liking before converting it.',
+          'Yet another YouTube ripper. Enter a Youtube link (in whatever format, most importantly the "watch..." part at the end has to be present) and you will receive the video information which you can adjust to your liking before converting it.',
           style: Theme.of(context).textTheme.titleLarge,
           textAlign: TextAlign.justify,
         ).constrained,

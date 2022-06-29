@@ -15,7 +15,7 @@ class ConvertHeader extends StatelessWidget {
           children: [
             Text(
               'NAYRIS',
-              style: Theme.of(context).textTheme.headline6,
+              style: Theme.of(context).textTheme.headline1,
             ),
             Text(
               'Not another YouTube ripper I swear',
