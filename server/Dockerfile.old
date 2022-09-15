@@ -10,10 +10,10 @@ ADD ./ ./
 # Install dependencies and build the application
 RUN npm install && npm run build
 
-# ------ RUNNER ------
-FROM registry.access.redhat.com/ubi8/nodejs-16:latest
 
-ENV PORT=4444
+# ------ RUNNER ------
+FROM node:17
+
 
 WORKDIR /nayris
 
@@ -25,32 +25,13 @@ COPY --from=builder /nayris/package.json ./package.json
 USER root
 
 # Update base environment
-RUN dnf -y update
-
-# Make sure we have the latest base
-RUN dnf -y upgrade
-
-# Install and enable EPEL (Extra Packages for Enterprise Linux)
-RUN dnf -y install --nogpgcheck https://download.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-
-# Install and enable RPM Fusion
-RUN dnf -y install https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm
-# RUN dnf -y install --nogpgcheck https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm
-
-# RUN dnf config-manager --enable PowerTools
-# RUN subscription-manager repos --enable "codeready-builder-for-rhel-8-$(uname -m)-rpms"
-
-# Needed asa dependency for ffmpeg
-RUN dnf -y install https://rpmfind.net/linux/epel/7/x86_64/Packages/s/SDL2-2.0.14-2.el7.x86_64.rpm
-
-# Install python3
-RUN dnf -y install -y python3
+RUN apt-get update
 
 # Symlink python3 dir to "normal" python dir
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# Install ffmpeg now that we have EPEL and RPM Fusion
-RUN dnf -y install ffmpeg
+# Install ffmpeg
+RUN apt-get -y install ffmpeg
 
 # Download youtube-dl binary and make it executable
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp
