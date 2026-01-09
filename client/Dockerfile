@@ -6,23 +6,18 @@ ARG CUSTOM_SERVER_URL
 # Set the working directory
 WORKDIR /frontend
 
-# Copy all files over to the workdir of the build process
-COPY . .
-
 RUN dnf upgrade --refresh -y && \
-    dnf install git -y && \
-    dnf install unzip -y
+    dnf install -y git unzip xz curl which
 
 # Download Flutter SDK
-RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
+RUN git clone https://github.com/flutter/flutter.git -b stable --depth 1 /usr/local/flutter
 ENV PATH="$PATH:/usr/local/flutter/bin"
+
+# Mark the flutter directory as safe for git
+RUN git config --global --add safe.directory /usr/local/flutter
 
 # Run basic check to download Dark SDK
 RUN flutter doctor
-
-# Switch to stable branch and upgrade
-RUN flutter channel stable
-RUN flutter upgrade
 
 # Used for the flutter configs
 RUN mkdir /.config && \
@@ -45,15 +40,20 @@ RUN mkdir /.config && \
 # RUN chgrp -R 0 ./ && \
 #     chmod -R g=u ./
 
+# Copy pubspec files first to cache dependencies
+COPY pubspec.* ./
 
 # Get all flutter dependencies
 RUN flutter pub get
+
+# Copy the rest of the application
+COPY . .
 
 # Build static web files (always canvaskit renderer)
 RUN flutter build web --web-renderer canvaskit --dart-define CUSTOM_SERVER_URL=${CUSTOM_SERVER_URL}
 
 # ------ RUNNER ------
-FROM registry.access.redhat.com/ubi8/nginx-120
+FROM registry.access.redhat.com/ubi8/nginx-122
 
 # Copy static files to folder where nginx will serve them
 COPY --from=builder /frontend/build/web .

@@ -4,11 +4,15 @@ FROM node:20 as builder
 # Set workdir where the application to build will reside
 WORKDIR /nayris
 
-# Copy all files over to the workdir of the build process
-ADD ./ ./
+# Copy package files first to leverage Docker cache
+COPY package*.json ./
 
-# Install dependencies and build the application
-RUN npm install && npm run build
+# Install dependencies
+RUN npm install
+
+# Copy source and build
+COPY . .
+RUN npm run build && npm prune --production
 
 # ------ RUNNER ------
 FROM node:20-slim
