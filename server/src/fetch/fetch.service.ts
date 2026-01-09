@@ -4,7 +4,7 @@ import { YoutubeInfo } from './dtos/youtube-info.dto';
 
 import fetch from 'node-fetch';
 
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 
 import YTDlpWrap from 'yt-dlp-wrap';
 
@@ -15,11 +15,6 @@ export class FetchService {
       throw ErrorHandler.httpException(ErrorType.emptySearch);
     }
 
-    // 1. Try to use the path from environment variable (Docker)
-    // 2. Fallback to default (Local - lets the library handle it)
-    const binaryPath = process.env.YTDLP_PATH || undefined;
-    const ytDlpWrap = new YTDlpWrap(binaryPath);
-
     let metadata: any;
 
     try {
@@ -29,30 +24,48 @@ export class FetchService {
         youtubeFragment.includes('youtu.be');
       const query = isUrl ? youtubeFragment : `ytsearch1:${youtubeFragment}`;
 
-      // Define potential paths for the cookie file
-      // 1. /etc/secrets/youtube/cookies.txt (Production/OpenShift Mount)
-      // 2. ./cookies.txt (Local Development)
-      const prodCookies = '/etc/secrets/youtube/cookies.txt';
-      const localCookies = './cookies.txt';
+      // 1. Setup Binary Path
+      // Docker: uses ENV var (/usr/local/bin/yt-dlp)
+      // Local: uses undefined (default search)
+      const binaryPath = process.env.YTDLP_PATH || undefined;
+      const ytDlpWrap = new YTDlpWrap(binaryPath);
 
-      // Determine which file to use
-      const cookiePath = existsSync(prodCookies) ? prodCookies : localCookies;
+      // 2. Get the PO Token
+      // In production, mount this file via ExternalSecret
+      const poTokenPath = '/etc/secrets/youtube/po_token';
+      let poToken = '';
 
+      if (existsSync(poTokenPath)) {
+        poToken = readFileSync(poTokenPath, 'utf8').trim();
+      } else {
+        poToken = process.env.NAYRIS_PO_TOKEN || '';
+      }
+
+      // 3. Construct Arguments
       const args = [
         query,
         '--dump-json',
         '--no-playlist',
         '--skip-download',
-        '--cookies',
-        cookiePath, // Use the detected path
+        // Crucial for Docker environments to allow signature decryption
         '--js-runtimes',
         'node',
       ];
 
+      // 4. Inject PO Token if available
+      if (poToken) {
+        args.push(
+          '--extractor-args',
+          `youtube:player_client=web;po_token=web+${poToken}`,
+        );
+      } else {
+        // FALLBACK: Impersonate iOS (often looser bot checks)
+        args.push('--extractor-args', 'youtube:player_client=ios');
+      }
+
       const jsonOutput = await ytDlpWrap.execPromise(args);
       metadata = JSON.parse(jsonOutput);
     } catch (e) {
-      // CRITICAL: Keep this logging here to debug if it still fails
       console.error('--- YT-DLP ERROR ---');
       console.error(e);
       console.error('--------------------');
@@ -68,7 +81,7 @@ export class FetchService {
         );
       }
     } catch (e) {
-      console.log(e);
+      console.log('Thumbnail fetch failed:', e);
     }
 
     const url =
@@ -79,7 +92,7 @@ export class FetchService {
       metadata.title,
       metadata.description,
       Array.from(rawImage),
-      [], // Badges are not available in yt-dlp JSON
+      [],
       metadata.view_count,
       metadata.duration_string,
       metadata.upload_date,
