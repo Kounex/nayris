@@ -52,8 +52,8 @@ RUN flutter pub get
 # Copy the rest of the application
 COPY . .
 
-# Build static web files (always canvaskit renderer)
-RUN flutter build web --web-renderer=canvaskit --dart-define "CUSTOM_SERVER_URL=${CUSTOM_SERVER_URL}"
+# Build static web files
+RUN flutter build web --dart-define "CUSTOM_SERVER_URL=${CUSTOM_SERVER_URL}"
 
 # ------ RUNNER ------
 FROM registry.access.redhat.com/ubi8/nginx-122
