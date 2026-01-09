@@ -18,6 +18,7 @@ RUN npm run build && npm prune --production
 FROM node:20-slim
 
 ENV PORT=4444
+ENV YTDLP_PATH=/usr/local/bin/yt-dlp
 
 WORKDIR /nayris
 

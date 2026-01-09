@@ -13,7 +13,11 @@ export class FetchService {
       throw ErrorHandler.httpException(ErrorType.emptySearch);
     }
 
-    const ytDlpWrap = new YTDlpWrap();
+    // 1. Try to use the path from environment variable (Docker)
+    // 2. Fallback to default (Local - lets the library handle it)
+    const binaryPath = process.env.YTDLP_PATH || undefined;
+    const ytDlpWrap = new YTDlpWrap(binaryPath);
+
     let metadata: any;
 
     try {
@@ -31,6 +35,10 @@ export class FetchService {
       ]);
       metadata = JSON.parse(jsonOutput);
     } catch (e) {
+      // CRITICAL: Keep this logging here to debug if it still fails
+      console.error('--- YT-DLP ERROR ---');
+      console.error(e);
+      console.error('--------------------');
       throw ErrorHandler.httpException(ErrorType.noResult);
     }
 
