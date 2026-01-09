@@ -31,8 +31,7 @@ export class FetchService {
       const ytDlpWrap = new YTDlpWrap(binaryPath);
 
       // 2. Get the PO Token
-      // In production, mount this file via ExternalSecret
-      const poTokenPath = '/etc/secrets/youtube/po_token';
+      const poTokenPath = '/etc/secrets/yt-po-token/po_token';
       let poToken = '';
 
       if (existsSync(poTokenPath)) {
