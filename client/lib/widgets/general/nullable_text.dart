@@ -15,8 +15,8 @@ class NullableText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SelectableText(
-      this.text ?? this.placeholder,
-      style: (this.style ?? Theme.of(context).textTheme.bodyText2!).copyWith(
+      text ?? placeholder,
+      style: (this.style ?? Theme.of(context).textTheme.bodyMedium!).copyWith(
         fontStyle: this.text == null ? FontStyle.italic : null,
       ),
     );

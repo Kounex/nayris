@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
@@ -61,10 +60,10 @@ class CroppedImageRepository
               needCrop) {
             convImage = image.copyCrop(
               convImage,
-              cropRect.left.toInt(),
-              cropRect.top.toInt(),
-              cropRect.width.toInt(),
-              cropRect.height.toInt(),
+              x: cropRect.left.toInt(),
+              y: cropRect.top.toInt(),
+              width: cropRect.width.toInt(),
+              height: cropRect.height.toInt(),
             );
           }
 
@@ -98,7 +97,7 @@ class ConvertRepository extends StateNotifier<AsyncValue<List<int>?>> {
     state = await AsyncValue.guard(() async {
       final res = await ref.read(dioProvider).post(
             '/convert',
-            data: songData,
+            data: songData.toJson(),
             options: Options(
               responseType: ResponseType.bytes,
             ),

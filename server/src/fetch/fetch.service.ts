@@ -4,43 +4,61 @@ import { YoutubeInfo } from './dtos/youtube-info.dto';
 
 import fetch from 'node-fetch';
 
-import * as ytsr from 'ytsr';
+import YTDlpWrap from 'yt-dlp-wrap';
 
 @Injectable()
 export class FetchService {
-    async search(youtubeFragment: string): Promise<YoutubeInfo> {
-        if (youtubeFragment == null || youtubeFragment.length <= 3) {
-            throw ErrorHandler.httpException(ErrorType.emptySearch);
-        }
-
-        const filters1 = await ytsr.getFilters(youtubeFragment);
-        const filter1 = filters1.get('Type').get('Video');
-
-        const result = await ytsr(filter1.url);
-
-        if (result.items.length <= 0 || result.items[0].type != 'video') {
-            throw ErrorHandler.httpException(ErrorType.noResult);
-        }
-
-        const video = result.items[0] as ytsr.Video;
-        var rawImage = new Uint8Array();
-
-        try {
-            rawImage = new Uint8Array((await (await fetch(video.bestThumbnail.url)).arrayBuffer()));
-        } catch (e) {
-            console.log(e);
-        }
-
-        return new YoutubeInfo(
-            video.author?.name,
-            video.title,
-            video.description,
-            Array.from(rawImage),
-            video.badges,
-            video.views,
-            video.duration,
-            video.uploadedAt,
-            video.url,
-        );
+  async search(youtubeFragment: string): Promise<YoutubeInfo> {
+    if (youtubeFragment == null || youtubeFragment.length <= 3) {
+      throw ErrorHandler.httpException(ErrorType.emptySearch);
     }
+
+    const ytDlpWrap = new YTDlpWrap();
+    let metadata: any;
+
+    try {
+      // Check if input is a URL or a search term/ID
+      const isUrl =
+        youtubeFragment.includes('youtube.com') ||
+        youtubeFragment.includes('youtu.be');
+      const query = isUrl ? youtubeFragment : `ytsearch1:${youtubeFragment}`;
+
+      const jsonOutput = await ytDlpWrap.execPromise([
+        query,
+        '--dump-json',
+        '--no-playlist',
+        '--skip-download',
+      ]);
+      metadata = JSON.parse(jsonOutput);
+    } catch (e) {
+      throw ErrorHandler.httpException(ErrorType.noResult);
+    }
+
+    var rawImage = new Uint8Array();
+
+    try {
+      if (metadata.thumbnail) {
+        rawImage = new Uint8Array(
+          await (await fetch(metadata.thumbnail)).arrayBuffer(),
+        );
+      }
+    } catch (e) {
+      console.log(e);
+    }
+
+    const url =
+      metadata.webpage_url || `https://www.youtube.com/watch?v=${metadata.id}`;
+
+    return new YoutubeInfo(
+      metadata.uploader,
+      metadata.title,
+      metadata.description,
+      Array.from(rawImage),
+      [], // Badges are not available in yt-dlp JSON
+      metadata.view_count,
+      metadata.duration_string,
+      metadata.upload_date,
+      url,
+    );
+  }
 }

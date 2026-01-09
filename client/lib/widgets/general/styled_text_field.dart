@@ -62,7 +62,8 @@ class _StyledTextFieldState extends State<StyledTextField> {
                               }
                             : null,
                         style: ElevatedButton.styleFrom(
-                          primary: Colors.red,
+                          // TODO: Use Theme.of(context).colorScheme.error
+                          backgroundColor: Colors.red,
                           shape: const CircleBorder(),
                         ),
                         child: const Icon(

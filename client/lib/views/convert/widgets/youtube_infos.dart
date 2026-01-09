@@ -28,6 +28,16 @@ class YoutubeInfos extends StatelessWidget {
     return null;
   }
 
+  String? _formatDate(String? date) {
+    if (date != null && RegExp(r'^\d{8}$').hasMatch(date)) {
+      final year = date.substring(0, 4);
+      final month = date.substring(4, 6);
+      final day = date.substring(6, 8);
+      return '$day.$month.$year';
+    }
+    return date;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -47,7 +57,7 @@ class YoutubeInfos extends StatelessWidget {
                   ),
                   NullableText(
                     this.youtubeInfo.uploader,
-                    style: Theme.of(context).textTheme.caption,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
@@ -56,9 +66,9 @@ class YoutubeInfos extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: NullableText(
-                this.youtubeInfo.published,
+                _formatDate(this.youtubeInfo.published),
                 placeholder: '-',
-                style: Theme.of(context).textTheme.caption,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
           ],
@@ -75,13 +85,13 @@ class YoutubeInfos extends StatelessWidget {
               child: NullableText(
                 '${_formatNumber(this.youtubeInfo.views)} views',
                 placeholder: '-',
-                style: Theme.of(context).textTheme.caption,
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
             NullableText(
               this.youtubeInfo.duration,
               placeholder: '-',
-              style: Theme.of(context).textTheme.caption,
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
         )

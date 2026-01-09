@@ -13,13 +13,29 @@ import '../../../types/extensions/iterable.dart';
 import '../../../types/extensions/widget.dart';
 import '../../../widgets/general/error_text.dart';
 
+List<double?> _kAspectRatios = [
+  CropAspectRatios.ratio1_1,
+  CropAspectRatios.ratio16_9,
+  CropAspectRatios.ratio4_3,
+  CropAspectRatios.original,
+  CropAspectRatios.custom,
+];
+
+Map<double?, String> _kCropRatioName = {
+  CropAspectRatios.custom: 'None',
+  CropAspectRatios.original: 'Original',
+  CropAspectRatios.ratio16_9: '16:9',
+  CropAspectRatios.ratio1_1: '1:1',
+  CropAspectRatios.ratio4_3: '4:3',
+};
+
 class ImageCropper extends ConsumerStatefulWidget {
   final YoutubeInfo youtubeInfo;
 
   const ImageCropper({
-    Key? key,
+    super.key,
     required this.youtubeInfo,
-  }) : super(key: key);
+  });
 
   @override
   _ImageCropperState createState() => _ImageCropperState();
@@ -27,24 +43,6 @@ class ImageCropper extends ConsumerStatefulWidget {
 
 class _ImageCropperState extends ConsumerState<ImageCropper> {
   final GlobalKey<ExtendedImageEditorState> _editorKey = GlobalKey();
-
-  final List<double?> _aspectRatios = [
-    CropAspectRatios.ratio1_1,
-    CropAspectRatios.ratio16_9,
-    CropAspectRatios.ratio4_3,
-    CropAspectRatios.original,
-    CropAspectRatios.custom,
-  ];
-
-  final Map<double?, String> _cropRatioName = {
-    CropAspectRatios.custom: 'None',
-    CropAspectRatios.original: 'Original',
-    CropAspectRatios.ratio16_9: '16:9',
-    CropAspectRatios.ratio1_1: '1:1',
-    CropAspectRatios.ratio3_4: '3:4',
-    CropAspectRatios.ratio4_3: '4:3',
-    CropAspectRatios.ratio9_16: '9:16',
-  };
 
   int _selectedAspectRatio = 0;
 
@@ -54,6 +52,29 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
           _editorKey.currentState?.getCropRect(),
           _editorKey.currentState?.editAction?.needCrop,
         );
+  }
+
+  Widget _buildEditorState(ExtendedImageState loadState) {
+    switch (loadState.extendedImageLoadState) {
+      case LoadState.loading:
+        return const CupertinoActivityIndicator();
+      case LoadState.failed:
+        ref.read(croppedImageProvider.notifier).reset();
+        return ErrorText(
+          customText: 'Error while trying to load the image!',
+          customDetails: loadState.lastStack?.toString(),
+        );
+      case LoadState.completed:
+        // We need to watch the provider here to react to its changes.
+        final croppedImage = ref.watch(croppedImageProvider);
+        if (croppedImage.asData?.value == null) {
+          // Perform the initial crop after the first frame is built.
+          SchedulerBinding.instance.addPostFrameCallback(
+            (_) => _applyCrop(),
+          );
+        }
+        return loadState.completedWidget;
+    }
   }
 
   @override
@@ -83,7 +104,7 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
                   error: (exception, stackTrace) => ErrorText(
                     customText:
                         'Error while cropping the image, please try again!',
-                    customDetails: stackTrace?.toString(),
+                    customDetails: stackTrace.toString(),
                   ),
                   data: (croppedImageData) => croppedImageData != null &&
                           croppedImageData.encodedPNG == null
@@ -115,39 +136,13 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
                     fit: BoxFit.contain,
                     mode: ExtendedImageMode.editor,
                     cacheRawData: true,
-                    loadStateChanged: (loadState) {
-                      return Center(child: () {
-                        switch (loadState.extendedImageLoadState) {
-                          case LoadState.loading:
-                            return const CupertinoActivityIndicator();
-                          case LoadState.failed:
-                            ref.read(croppedImageProvider.notifier).reset();
-                            return ErrorText(
-                              customText:
-                                  'Error while trying to load the image!',
-                              customDetails: loadState.lastStack?.toString(),
-                            );
-                          case LoadState.completed:
-                            if (croppedImage.asData?.value == null) {
-                              SchedulerBinding.instance.addPostFrameCallback(
-                                (_) => setState(
-                                  () {
-                                    _applyCrop();
-                                  },
-                                ),
-                              );
-                            }
-                            return loadState.completedWidget;
-                          default:
-                            return const Text('Unknown Error');
-                        }
-                      }());
-                    },
+                    loadStateChanged: (loadState) =>
+                        Center(child: _buildEditorState(loadState)),
                     initEditorConfigHandler: (state) => EditorConfig(
                       cornerColor: Theme.of(context).colorScheme.primary,
                       cornerSize: const Size(30, 4),
                       reverseMousePointerScrollDirection: true,
-                      cropAspectRatio: _aspectRatios[_selectedAspectRatio],
+                      cropAspectRatio: _kAspectRatios[_selectedAspectRatio],
                     ),
                   ),
                 ),
@@ -164,7 +159,7 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
                     runSpacing: 8.0,
                     spacing: 8.0,
                     children: List.from(
-                      _aspectRatios.mapIndexed(
+                      _kAspectRatios.mapIndexed(
                         (ratio, index) => ColorFiltered(
                           colorFilter: ColorFilter.mode(
                             editImage ? Colors.white : Colors.grey.shade500,
@@ -180,7 +175,7 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
                               backgroundColor: index == _selectedAspectRatio
                                   ? Theme.of(context).colorScheme.primary
                                   : null,
-                              label: Text(_cropRatioName[ratio] ?? 'None'),
+                              label: Text(_kCropRatioName[ratio] ?? 'None'),
                             ),
                           ),
                         ),
@@ -190,13 +185,12 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
                   const SizedBox(height: 12.0),
                   ElevatedButton.icon(
                     onPressed: () {
-                      setState(() {
-                        if (editImage) {
-                          _applyCrop();
-                        } else {
-                          ref.read(editImageProvider.notifier).state = true;
-                        }
-                      });
+                      if (editImage) {
+                        _applyCrop();
+                        ref.read(editImageProvider.notifier).state = false;
+                      } else {
+                        ref.read(editImageProvider.notifier).state = true;
+                      }
                     },
                     icon: Icon(
                       editImage
@@ -206,7 +200,8 @@ class _ImageCropperState extends ConsumerState<ImageCropper> {
                     ),
                     label: Text(editImage ? 'Save' : 'Edit'),
                     style: ElevatedButton.styleFrom(
-                      primary: editImage ? CupertinoColors.activeGreen : null,
+                      backgroundColor:
+                          editImage ? CupertinoColors.activeGreen : null,
                     ),
                   )
                 ],

@@ -8,8 +8,14 @@ final dioProvider = Provider((ref) {
 
   final dio = Dio(
     BaseOptions(
-      baseUrl:
-          serverURL.isEmpty ? 'https://${Uri.base.host}/api/v1' : serverURL,
+      baseUrl: serverURL.isEmpty
+          ? Uri(
+              scheme: Uri.base.scheme,
+              host: Uri.base.host,
+              port: Uri.base.hasPort ? 4444 : null,
+              path: '/api/v1',
+            ).toString()
+          : serverURL,
       // !Uri.base.hasPort
       //     ? 'https://nayris.kounex.com/api'
       //     : 'http://localhost:4444',

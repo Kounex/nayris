@@ -1,9 +1,6 @@
-import { Body, Controller, Get, Post, Req, StreamableFile } from '@nestjs/common';
-import { SongData } from './dtos/song-data.dto';
+import { Body, Controller, Post, StreamableFile } from '@nestjs/common';
 import { ConvertService } from './convert.service';
-import { Request } from 'express';
-import { createReadStream } from 'fs';
-import { join } from 'path';
+import { SongData } from './dtos/song-data.dto';
 
 @Controller()
 export class ConvertController {
@@ -15,12 +12,5 @@ export class ConvertController {
     const file = await this.convertService.createFile(songData);
 
     return new StreamableFile(file);
-  }
-
-  @Get('/test')
-  public async test(): Promise<string> {
-    this.convertService.testExec();
-
-    return 'done';
   }
 }
