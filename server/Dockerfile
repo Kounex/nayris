@@ -33,6 +33,9 @@ COPY --from=builder /nayris/package.json ./package.json
 # Download youtube-dl binary and make it executable
 RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp && chmod a+rx /usr/local/bin/yt-dlp
 
+# Install Nest CLI globally
+RUN npm install -g @nestjs/cli
+
 # Change group and access rights so these folders / executables can
 # be used as non root for security reasons
 RUN mkdir tmp && \
