@@ -4,6 +4,8 @@ import { YoutubeInfo } from './dtos/youtube-info.dto';
 
 import fetch from 'node-fetch';
 
+import { existsSync } from 'fs';
+
 import YTDlpWrap from 'yt-dlp-wrap';
 
 @Injectable()
@@ -27,12 +29,27 @@ export class FetchService {
         youtubeFragment.includes('youtu.be');
       const query = isUrl ? youtubeFragment : `ytsearch1:${youtubeFragment}`;
 
-      const jsonOutput = await ytDlpWrap.execPromise([
+      // Define potential paths for the cookie file
+      // 1. /etc/secrets/youtube/cookies.txt (Production/OpenShift Mount)
+      // 2. ./cookies.txt (Local Development)
+      const prodCookies = '/etc/secrets/youtube/cookies.txt';
+      const localCookies = './cookies.txt';
+
+      // Determine which file to use
+      const cookiePath = existsSync(prodCookies) ? prodCookies : localCookies;
+
+      const args = [
         query,
         '--dump-json',
         '--no-playlist',
         '--skip-download',
-      ]);
+        '--cookies',
+        cookiePath, // Use the detected path
+        '--js-runtimes',
+        'node',
+      ];
+
+      const jsonOutput = await ytDlpWrap.execPromise(args);
       metadata = JSON.parse(jsonOutput);
     } catch (e) {
       // CRITICAL: Keep this logging here to debug if it still fails
