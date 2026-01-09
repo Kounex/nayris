@@ -23,6 +23,9 @@ RUN flutter doctor
 RUN mkdir /.config && \
     mkdir /.pub-cache
 
+# Explicitly enable web support to ensure 'build web' options are available
+RUN flutter config --enable-web
+
 # Update permissions for all related paths (flutter + project)
 # so a non root user can use those explicitly but none else
 # 
@@ -50,7 +53,7 @@ RUN flutter pub get
 COPY . .
 
 # Build static web files (always canvaskit renderer)
-RUN flutter build web --web-renderer canvaskit --dart-define CUSTOM_SERVER_URL=${CUSTOM_SERVER_URL}
+RUN flutter build web --web-renderer=canvaskit --dart-define "CUSTOM_SERVER_URL=${CUSTOM_SERVER_URL}"
 
 # ------ RUNNER ------
 FROM registry.access.redhat.com/ubi8/nginx-122
