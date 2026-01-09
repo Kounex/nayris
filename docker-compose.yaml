@@ -1,0 +1,16 @@
+services:
+  server:
+    container_name: nayris-server
+    image: ghcr.io/kounex/nayris/nestjs-server:latest
+    ports:
+      - "4444:4444"
+    restart: unless-stopped
+
+  client:
+    container_name: nayris-client
+    image: ghcr.io/kounex/nayris/nginx-client:latest
+    ports:
+      - "8888:8080"
+    depends_on:
+      - server
+    restart: unless-stopped

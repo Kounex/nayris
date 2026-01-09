@@ -4,8 +4,6 @@ import { YoutubeInfo } from './dtos/youtube-info.dto';
 
 import fetch from 'node-fetch';
 
-import { existsSync, readFileSync } from 'fs';
-
 import YTDlpWrap from 'yt-dlp-wrap';
 
 @Injectable()
@@ -30,17 +28,7 @@ export class FetchService {
       const binaryPath = process.env.YTDLP_PATH || undefined;
       const ytDlpWrap = new YTDlpWrap(binaryPath);
 
-      // 2. Get the PO Token
-      const poTokenPath = '/etc/secrets/yt-po-token/po_token';
-      let poToken = '';
-
-      if (existsSync(poTokenPath)) {
-        poToken = readFileSync(poTokenPath, 'utf8').trim();
-      } else {
-        poToken = process.env.NAYRIS_PO_TOKEN || '';
-      }
-
-      // 3. Construct Arguments
+      // 2. Construct Arguments
       const args = [
         query,
         '--dump-json',
@@ -50,17 +38,6 @@ export class FetchService {
         '--js-runtimes',
         'node',
       ];
-
-      // 4. Inject PO Token if available
-      if (poToken) {
-        args.push(
-          '--extractor-args',
-          `youtube:player_client=web;po_token=web+${poToken}`,
-        );
-      } else {
-        // FALLBACK: Impersonate iOS (often looser bot checks)
-        args.push('--extractor-args', 'youtube:player_client=ios');
-      }
 
       const jsonOutput = await ytDlpWrap.execPromise(args);
       metadata = JSON.parse(jsonOutput);
