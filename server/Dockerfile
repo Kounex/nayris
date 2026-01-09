@@ -41,4 +41,4 @@ RUN mkdir tmp && \
 # Change user to non root
 USER node
 
-ENTRYPOINT ["npm", "run", "start:prod"]
+ENTRYPOINT ["npm", "run", "start"]
