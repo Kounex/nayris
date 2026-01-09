@@ -44,4 +44,4 @@ RUN mkdir tmp && \
 # Change user to non root
 USER node
 
-ENTRYPOINT ["npm", "run", "start"]
+ENTRYPOINT ["node", "--enable-source-maps", "dist/main"]
