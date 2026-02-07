@@ -25,14 +25,12 @@ WORKDIR /nayris
 
 # Install python3 (required for yt-dlp) and curl
 RUN apt-get update && \
-    apt-get install -y python3 python-is-python3 curl ffmpeg wget unzip && \
+    apt-get install -y python3 python-is-python3 curl ffmpeg && \
     rm -rf /var/lib/apt/lists/*
 
-# Install PhantomJS (legacy JS runtime often helps with yt-dlp on certain sites)
-RUN wget https://bitbucket.org/ariya/phantomjs/downloads/phantomjs-2.1.1-linux-x86_64.tar.bz2 && \
-    tar xvjf phantomjs-2.1.1-linux-x86_64.tar.bz2 -C /usr/local/share/ && \
-    ln -sf /usr/local/share/phantomjs-2.1.1-linux-x86_64/bin/phantomjs /usr/local/bin && \
-    rm phantomjs-2.1.1-linux-x86_64.tar.bz2
+# Install Deno (modern JS runtime preferred by yt-dlp)
+COPY --from=denoland/deno:bin-1.46.3 /deno /usr/local/bin/deno
+# (Using a fixed version for stability, or use :bin for latest)
 
 COPY --from=builder /nayris/dist ./dist
 COPY --from=builder /nayris/node_modules ./node_modules
