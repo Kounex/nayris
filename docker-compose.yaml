@@ -2,6 +2,8 @@ services:
   server:
     container_name: nayris-server
     image: ghcr.io/kounex/nayris/nestjs-server:latest
+    environment:
+      - CLOUDFLARE_TEAM_DOMAIN=your-team-name # <--- ADD THIS
     ports:
       - "4444:4444"
     restart: unless-stopped
