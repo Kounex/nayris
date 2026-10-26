@@ -1,5 +1,5 @@
 # ------ BUILDER ------
-FROM redhat/ubi8:latest as builder
+FROM redhat/ubi8:8.10-1792743128@sha256:bd097b288df365aec7bad694c87036534ce94d1a4974c943f417f757f8eb2ac4 as builder
 
 ARG CUSTOM_SERVER_URL
 
@@ -56,7 +56,7 @@ COPY . .
 RUN flutter build web --dart-define "CUSTOM_SERVER_URL=${CUSTOM_SERVER_URL}"
 
 # ------ RUNNER ------
-FROM registry.access.redhat.com/ubi8/nginx-122
+FROM registry.access.redhat.com/ubi8/nginx-122:1-1766405973@sha256:e43394d66f7a1c400fd2c831a803a38d539ac83d9ece2c521dea052de070f365
 
 # Copy static files to folder where nginx will serve them
 COPY --from=builder /frontend/build/web .

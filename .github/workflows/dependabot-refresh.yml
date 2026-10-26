@@ -1,0 +1,73 @@
+# From it-env/templates/container-image/release-flows/ (see ../README.md there).
+name: dependabot refresh
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  build:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - { context: client, file: client/Dockerfile }
+          - { context: server, file: server/Dockerfile }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: false
+
+  automerge:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@v3
+      - id: ok
+        name: Patch or digest-only?
+        # Grouped PRs report no update-type; only the patch-only group `patches`
+        # qualifies, matched by its branch name.
+        if: >-
+          steps.meta.outputs.package-ecosystem != 'github_actions' && (
+            steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+            contains(github.event.pull_request.head.ref, '/patches-') || (
+              steps.meta.outputs.package-ecosystem == 'docker' &&
+              steps.meta.outputs.new-version != '' &&
+              steps.meta.outputs.previous-version == steps.meta.outputs.new-version))
+        run: echo "yes"
+      - name: Wait for the PR's other checks
+        if: steps.ok.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          for i in $(seq 1 90); do
+            checks=$(gh pr checks "$PR" --json workflow,bucket 2>/dev/null || echo '[]')
+            others=$(echo "$checks" | jq '[.[] | select(.workflow != "dependabot refresh")]')
+            if [ "$(echo "$others" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')" -gt 0 ]; then
+              echo "::error::Another check on this PR failed; leaving it for a human."
+              exit 1
+            fi
+            [ "$(echo "$others" | jq '[.[] | select(.bucket == "pending")] | length')" -eq 0 ] && exit 0
+            sleep 20
+          done
+          echo "::error::Other checks still pending after 30 min."
+          exit 1
+      - name: Merge and release
+        if: steps.ok.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr merge "$PR" --squash --delete-branch
+          gh workflow run refresh-release.yml --ref "${{ github.event.repository.default_branch }}" -R "$GITHUB_REPOSITORY"
