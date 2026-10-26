@@ -1,5 +1,5 @@
 # ------ BUILDER ------
-FROM node:17 as builder
+FROM node:26 as builder
 
 # Set workdir where the application to build will reside
 WORKDIR /nayris
@@ -12,7 +12,7 @@ RUN npm install && npm run build
 
 
 # ------ RUNNER ------
-FROM node:17
+FROM node:26
 
 
 WORKDIR /nayris
