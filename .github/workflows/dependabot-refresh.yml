@@ -36,11 +36,14 @@ jobs:
       - id: ok
         name: Patch or digest-only?
         # Grouped PRs report no update-type; only the patch-only group `patches`
-        # qualifies, matched by its branch name.
+        # qualifies, matched by its branch name. Node minors stay inside an LTS
+        # line and are backward compatible by Node's release policy.
         if: >-
           steps.meta.outputs.package-ecosystem != 'github_actions' && (
             steps.meta.outputs.update-type == 'version-update:semver-patch' ||
-            contains(github.event.pull_request.head.ref, '/patches-') || (
+            contains(github.event.pull_request.head.ref, '/patches-') ||
+            (steps.meta.outputs.dependency-names == 'node' &&
+             steps.meta.outputs.update-type == 'version-update:semver-minor') || (
               steps.meta.outputs.package-ecosystem == 'docker' &&
               steps.meta.outputs.new-version != '' &&
               steps.meta.outputs.previous-version == steps.meta.outputs.new-version))
