@@ -56,25 +56,22 @@ jobs:
         id: bump
         if: steps.guard.outputs.go == 'true'
         run: |
+          # Client and server share one version: the fleet board updates them as
+          # one unit (same repo, same tag), so they must never diverge.
           new=$(python3 - <<'PY'
-          import re, subprocess
-          changed = subprocess.run(['git', 'diff', '--name-only', 'origin/release', 'HEAD'], capture_output=True, text=True).stdout.split()
-          out = []
-          if any(f.startswith('server/') for f in changed):
-              p = 'server/package.json'; s = open(p).read()
-              m = re.search(r'"version": "(\d+)\.(\d+)\.(\d+)"', s)
-              v = f'{m[1]}.{m[2]}.{int(m[3]) + 1}'
-              open(p, 'w').write(s[:m.start()] + f'"version": "{v}"' + s[m.end():]); out.append(f'server {v}')
-          if any(f.startswith('client/') for f in changed):
-              p = 'client/pubspec.yaml'; s = open(p).read()
-              m = re.search(r'^version: (\d+)\.(\d+)\.(\d+)(\+(\d+))?$', s, re.M)
-              v = f'{m[1]}.{m[2]}.{int(m[3]) + 1}'
-              build = f'+{int(m[5]) + 1}' if m[5] else ''
-              open(p, 'w').write(s[:m.start()] + f'version: {v}{build}' + s[m.end():]); out.append(f'client {v}')
-          print(', '.join(out) or 'nothing')
+          import re
+          sp, cp = 'server/package.json', 'client/pubspec.yaml'
+          s, c = open(sp).read(), open(cp).read()
+          ms = re.search(r'"version": "(\d+)\.(\d+)\.(\d+)"', s)
+          mc = re.search(r'^version: (\d+)\.(\d+)\.(\d+)(\+(\d+))?$', c, re.M)
+          cur = max(tuple(map(int, ms.groups())), tuple(map(int, mc.groups()[:3])))
+          v = f'{cur[0]}.{cur[1]}.{cur[2] + 1}'
+          open(sp, 'w').write(s[:ms.start()] + f'"version": "{v}"' + s[ms.end():])
+          build = f'+{int(mc[5]) + 1}' if mc[5] else ''
+          open(cp, 'w').write(c[:mc.start()] + f'version: {v}{build}' + c[mc.end():])
+          print(v)
           PY
           )
-          [ "$new" != nothing ] || { echo "Only files outside client/ and server/ changed; nothing to publish."; exit 1; }
           echo "version=$new" >> "$GITHUB_OUTPUT"
 
       - name: Commit and publish
@@ -88,6 +85,5 @@ jobs:
           git commit -am "release($VERSION): dependency refresh"
           git push origin HEAD:"$GITHUB_REF_NAME"
           git push origin HEAD:release
-          changed=$(git diff --name-only HEAD~1 HEAD)
-          if echo "$changed" | grep -q '^server/'; then gh workflow run ci-server.yaml --ref release; fi
-          if echo "$changed" | grep -q '^client/'; then gh workflow run ci-client.yaml --ref release; fi
+          gh workflow run ci-server.yaml --ref release
+          gh workflow run ci-client.yaml --ref release
