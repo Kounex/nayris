@@ -31,11 +31,16 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: |
           last=origin/release
-          authors=$(git log --format='%an' "$last..HEAD")
-          if [ -z "$authors" ]; then
-            echo "Nothing since $last."; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+          if [ "$FORCE" != true ] && ! git log --format='%an' "$last..HEAD" | grep -q -x 'dependabot\[bot\]'; then
+            echo "No Dependabot commits since $last; nothing to refresh."; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if [ "$FORCE" != true ] && echo "$authors" | grep -v -x -e 'dependabot\[bot\]' -e 'github-actions\[bot\]' | grep -q .; then
+          # Unreleased human work = commits not by the bots that change something
+          # outside .github/ (CI-only commits don't change what ships).
+          unreleased=$(git log --format='%H%x09%an' "$last..HEAD" | while IFS=$'\t' read -r sha author; do
+            case "$author" in 'dependabot[bot]'|'github-actions[bot]') continue ;; esac
+            git diff-tree --no-commit-id --name-only -r "$sha" | grep -v -q '^\.github/' && echo "$sha"
+          done)
+          if [ "$FORCE" != true ] && [ -n "$unreleased" ]; then
             echo "::notice::Unreleased non-Dependabot commits since $last; ship them with your next normal release."
             echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
