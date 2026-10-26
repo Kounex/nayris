@@ -31,15 +31,21 @@ jobs:
           FORCE: ${{ inputs.force }}
         run: |
           last=origin/release
-          if [ "$FORCE" != true ] && ! git log --format='%an' "$last..HEAD" | grep -q -x 'dependabot\[bot\]'; then
+          commits=$(git log --format='%H%x09%an' "$last..HEAD")
+          # Runs under bash -e -o pipefail: no early-exit pipes (grep -q), use grep -c.
+          bots=$(printf '%s\n' "$commits" | cut -f2 | grep -c -x 'dependabot\[bot\]' || true)
+          if [ "$FORCE" != true ] && [ "$bots" -eq 0 ]; then
             echo "No Dependabot commits since $last; nothing to refresh."; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           # Unreleased human work = commits not by the bots that change something
           # outside .github/ (CI-only commits don't change what ships).
-          unreleased=$(git log --format='%H%x09%an' "$last..HEAD" | while IFS=$'\t' read -r sha author; do
+          unreleased=""
+          while IFS=$'\t' read -r sha author; do
+            [ -n "$sha" ] || continue
             case "$author" in 'dependabot[bot]'|'github-actions[bot]') continue ;; esac
-            git diff-tree --no-commit-id --name-only -r "$sha" | grep -v -q '^\.github/' && echo "$sha"
-          done)
+            outside=$(git diff-tree --no-commit-id --name-only -r "$sha" | grep -c -v '^\.github/' || true)
+            if [ "$outside" -gt 0 ]; then unreleased="$unreleased $sha"; fi
+          done <<<"$commits"
           if [ "$FORCE" != true ] && [ -n "$unreleased" ]; then
             echo "::notice::Unreleased non-Dependabot commits since $last; ship them with your next normal release."
             echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
