@@ -24,6 +24,19 @@ updates:
       patches:
         update-types: ["patch"]
         patterns: ["*"]
+    ignore:
+      # Majors of these are a planned migration (NestJS 10 -> 11/12 + TypeScript 7 + eslint flat config), not a refresh;
+      # see Kounex/it-env templates/container-image/README.md, "Planned migrations".
+      - dependency-name: "@nestjs/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@typescript-eslint/*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint-*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
