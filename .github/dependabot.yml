@@ -37,6 +37,10 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "eslint-*"
         update-types: ["version-update:semver-major"]
+      # @types/node majors follow the Node runtime major (Node 22 -> 24/26 is
+      # a planned migration); 26.x typings describe APIs Node 22 doesn't have.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
