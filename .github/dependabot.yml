@@ -41,6 +41,11 @@ updates:
       # a planned migration); 26.x typings describe APIs Node 22 doesn't have.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
+      # @types/express majors follow the Express major the NestJS adapter runs:
+      # @nestjs/platform-express 10 serves on Express 4, Express 5 comes with
+      # the NestJS 11 migration above.
+      - dependency-name: "@types/express"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
