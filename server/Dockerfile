@@ -1,5 +1,5 @@
 # ------ BUILDER ------
-FROM node:22.23.4-bookworm@sha256:18a6d90fd60542269850c80ca03b29b1d9b14d6b221ac7ee8e35b0d33ef904bd as builder
+FROM node:22.23.4-bookworm@sha256:7702d8aa4d5910871692af4480eb3ba86f23047a6417a44d857d06c95d060d3f as builder
 
 # Set workdir where the application to build will reside
 WORKDIR /nayris
@@ -15,7 +15,7 @@ COPY . .
 RUN npm run build && npm prune --production
 
 # ------ RUNNER ------
-FROM node:22.23.4-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
+FROM node:22.23.4-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d
 
 ENV PORT=4444
 ENV CLOUDFLARE_TEAM_DOMAIN=
