@@ -1,5 +1,5 @@
 # ------ BUILDER ------
-FROM redhat/ubi8:8.10@sha256:c322aa68f2d630b36b9faab64094357f62720be2f56f7099376ca2d6c4fe389b as builder
+FROM redhat/ubi8:8.10@sha256:44f19e308462e9152cb26d641fc0ce5bf6cbdab3cd101367aed67573eb2cf20e as builder
 
 ARG CUSTOM_SERVER_URL
 
