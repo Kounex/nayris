@@ -28,7 +28,7 @@
     "compression": "^1.8.2",
     "cors": "^2.8.6",
     "fluent-ffmpeg": "^2.1.2",
-    "jose": "^6.2.17",
+    "jose": "^6.2.18",
     "node-fetch": "^3.3.2",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.1.4",
@@ -38,7 +38,7 @@
     "ytsr": "^3.8.4"
   },
   "devDependencies": {
-    "@nestjs/cli": "^12.0.12",
+    "@nestjs/cli": "^12.0.13",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.4.22",
     "@types/compression": "^1.8.1",
