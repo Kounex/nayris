@@ -38,12 +38,12 @@ jobs:
             echo "No Dependabot commits since $last; nothing to refresh."; echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           # Unreleased human work = commits not by the bots that change something
-          # outside .github/ (CI-only commits don't change what ships).
+          # outside CI and docs (.github/, docs/, any *.md): those don't change what ships.
           unreleased=""
           while IFS=$'\t' read -r sha author; do
             [ -n "$sha" ] || continue
             case "$author" in 'dependabot[bot]'|'github-actions[bot]') continue ;; esac
-            outside=$(git diff-tree --no-commit-id --name-only -r "$sha" | grep -c -v '^\.github/' || true)
+            outside=$(git diff-tree --no-commit-id --name-only -r "$sha" | grep -c -v -E '^(\.github|docs)/|\.md$' || true)
             if [ "$outside" -gt 0 ]; then unreleased="$unreleased $sha"; fi
           done <<<"$commits"
           if [ "$FORCE" != true ] && [ -n "$unreleased" ]; then
